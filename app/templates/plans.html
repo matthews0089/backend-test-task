@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel empty-state">
+  <span class="badge">Subscription plans</span>
+  <h1>Simple plans for testing a real SaaS flow</h1>
+  {% if user %}
+    <p>Choose a plan and continue to Stripe Checkout.</p>
+  {% else %}
+    <p>Plans are visible publicly. Login or create an account to start checkout.</p>
+  {% endif %}
+</section>
+
+<div class="pricing-grid" style="margin-top: 24px;">
+  {% for plan in plans %}
+  <section class="plan">
+    <div class="plan-title">
+      <span class="badge">{{ plan.billing_period }}</span>
+      <h2>{{ plan.name }}</h2>
+    </div>
+    <p class="plan-meta">{{ plan.tier }} subscription billed {{ plan.billing_period | lower }}.</p>
+      {% if user %}
+        <form action="/checkout" method="post">
+          <input type="hidden" name="plan_id" value="{{ plan.id }}">
+          <button type="submit">Subscribe</button>
+        </form>
+      {% else %}
+        <div class="actions">
+          <a class="button" href="/login?next=/plans">Login to buy</a>
+          <a class="button secondary" href="/register?next=/plans">Register</a>
+        </div>
+      {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

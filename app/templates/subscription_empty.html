@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="subscription-layout">
+  <section class="panel empty-state">
+    <div class="empty-icon">+</div>
+    <span class="badge">No subscription yet</span>
+    <h1>Choose your first plan</h1>
+    <p>Your account is ready. Start a subscription below and Stripe Checkout will handle the payment securely.</p>
+  </section>
+
+  <div class="section-row">
+    <div>
+      <h2 class="section-heading">Available Plans</h2>
+      <p class="muted">Pick a billing period that fits how you want to test the product.</p>
+    </div>
+  </div>
+
+  <div class="pricing-grid">
+    {% for plan in plans %}
+    <section class="plan">
+      <div class="plan-title">
+        <span class="badge">{{ plan.billing_period }}</span>
+        <h2>{{ plan.name }}</h2>
+      </div>
+      <p class="plan-meta">{{ plan.tier }} subscription billed {{ plan.billing_period | lower }}.</p>
+      <form action="/checkout" method="post">
+        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+        <button type="submit">Start subscription</button>
+      </form>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

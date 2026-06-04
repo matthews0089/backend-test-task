@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Register</h1>
+  <p>Create an account before starting a Stripe Checkout subscription.</p>
+  {% if error %}
+  <p class="alert">{{ error }}</p>
+  {% endif %}
+  <form method="post">
+    <input type="hidden" name="next" value="{{ next_url }}">
+    <label>Email<br><input name="email" type="email" autocomplete="email" value="{{ email or '' }}" required></label><br>
+    <label>Password<br><input name="password" type="password" autocomplete="new-password" minlength="8" required></label><br>
+    <button type="submit">Register</button>
+  </form>
+  <p class="muted">Already have an account? <a href="/login?next={{ next_url }}">Login</a>.</p>
+</section>
+{% endblock %}

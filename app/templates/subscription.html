@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="subscription-layout">
+{% if message %}
+<p class="notice">{{ message }}</p>
+{% endif %}
+
+<section class="panel summary-card">
+  <div class="panel-heading">
+    <div>
+      <p class="muted">Current subscription</p>
+      <div class="summary-plan">
+        <h1>{{ "Canceled subscription" if subscription.status == "canceled" else subscription.plan.name }}</h1>
+      </div>
+      {% if subscription.status == "canceled" %}
+      <p class="muted">Previous plan: {{ subscription.plan.name }}</p>
+      {% endif %}
+    </div>
+    {% if subscription.status in ["active", "trialing"] %}
+      <span class="badge success">Paid successfully</span>
+    {% elif subscription.status == "canceled" %}
+      <span class="badge danger">Canceled</span>
+    {% else %}
+      <span class="badge">{{ subscription.status }}</span>
+    {% endif %}
+  </div>
+  <dl class="kv">
+    <dt>Status</dt><dd>{{ subscription.status }}</dd>
+    <dt>Period start</dt><dd>{{ subscription.current_period_start | date_only }}</dd>
+    <dt>Period end</dt><dd>{{ subscription.current_period_end | date_only }}</dd>
+  </dl>
+  {% if subscription.status != "canceled" %}
+  <form action="/subscription/cancel" method="post">
+    <button class="danger" type="submit">Cancel</button>
+  </form>
+  {% endif %}
+</section>
+
+{% if subscription.status == "canceled" %}
+<div class="section-row">
+  <div>
+    <h2 class="section-heading">Start New Subscription</h2>
+    <p class="muted">This subscription is canceled. Choose a plan below to start a new Stripe Checkout subscription.</p>
+  </div>
+</div>
+{% else %}
+<div class="section-row">
+  <div>
+    <h2 class="section-heading">Change Plan</h2>
+    <p class="muted">Switching plans applies Stripe's prorated billing immediately.</p>
+  </div>
+</div>
+{% endif %}
+<div class="pricing-grid">
+  {% for plan in plans %}
+  <section class="plan {% if subscription.status != 'canceled' and plan.id == subscription.plan_id %}current{% endif %}">
+    <div class="plan-title">
+      <span class="badge">{{ plan.billing_period }}</span>
+      <h2>{{ plan.name }}</h2>
+    </div>
+    <p class="plan-meta">{{ plan.tier }} subscription billed {{ plan.billing_period | lower }}.</p>
+    <form action="{{ '/checkout' if subscription.status == 'canceled' else '/subscription/change' }}" method="post">
+      <input type="hidden" name="plan_id" value="{{ plan.id }}">
+      <button type="submit" {% if subscription.status != "canceled" and plan.id == subscription.plan_id %}disabled{% endif %}>
+        {% if subscription.status == "canceled" %}
+          Subscribe
+        {% else %}
+          {{ "Current plan" if plan.id == subscription.plan_id else "Switch plan" }}
+        {% endif %}
+      </button>
+    </form>
+  </section>
+  {% endfor %}
+</div>
+</div>
+{% endblock %}

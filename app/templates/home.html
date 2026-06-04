@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <span class="badge">SaaS subscriptions</span>
+  <h1>Buy and manage your subscription in one place</h1>
+  <p>Choose a plan, pay securely with Stripe Checkout, and manage upgrades, cancellations, and billing periods from your cabinet.</p>
+  <div class="actions">
+    {% if user %}
+      <a class="button" href="/subscription">Open cabinet</a>
+      <a class="button secondary" href="/plans">View plans</a>
+    {% else %}
+      <a class="button" href="/register">Create account</a>
+      <a class="button secondary" href="/login">Login</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
