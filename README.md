@@ -4,6 +4,68 @@ A subscription-based web application built as a backend engineering test task. T
 
 The UI is intentionally minimal Jinja HTML. The main focus is backend architecture, clear separation of concerns, maintainability, and pluggable external integrations.
 
+## Quick Start For Reviewers
+
+Follow this checklist to run the project with working Stripe subscription synchronization:
+
+1. Copy environment variables:
+
+```bash
+cp .env.example .env
+```
+
+2. Fill `.env` with local and Stripe test values:
+
+```text
+JWT_SECRET_KEY=change-me-to-a-long-random-value
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_STARTER_WEEKLY=price_...
+STRIPE_PRICE_STARTER_MONTHLY=price_...
+STRIPE_PRICE_PRO_WEEKLY=price_...
+STRIPE_PRICE_PRO_MONTHLY=price_...
+```
+
+3. Start the application and PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+4. In a second terminal, start Stripe webhook forwarding:
+
+```bash
+set -a
+. ./.env
+set +a
+stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to localhost:8000/api/v1/webhooks/stripe
+```
+
+5. Copy the `whsec_...` value printed by Stripe CLI into `STRIPE_WEBHOOK_SECRET` in `.env`.
+
+6. Restart the app so it loads the webhook secret:
+
+```bash
+docker compose restart app
+```
+
+7. Open the app:
+
+```text
+http://localhost:8000
+```
+
+8. Register a user, choose a plan, and pay with Stripe test card:
+
+```text
+4242 4242 4242 4242
+Any future expiration date
+Any 3-digit CVC
+Any postal code
+```
+
+**Important:** Stripe webhooks are the source of truth. The success redirect only means the browser returned from Stripe Checkout. The local subscription status, dates, upgrades, downgrades, and cancellations are synchronized by webhook events. **Keep `stripe listen` running while testing payments.**
+
 ## Architecture
 
 The project is organized as a modular monolith:
@@ -90,10 +152,21 @@ Handled events:
 With Stripe CLI:
 
 ```bash
-stripe listen --forward-to localhost:8000/api/v1/webhooks/stripe
+set -a
+. ./.env
+set +a
+stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to localhost:8000/api/v1/webhooks/stripe
 ```
 
-Copy the displayed `whsec_...` value into `STRIPE_WEBHOOK_SECRET`.
+Run this command in a separate terminal while testing local payments. Stripe Checkout can accept a payment without this listener, but the local application will not update the subscription until the webhook is delivered.
+
+Copy the displayed `whsec_...` value into `STRIPE_WEBHOOK_SECRET`, then restart the app container so the new environment value is loaded:
+
+```bash
+docker compose restart app
+```
+
+If Stripe CLI was not running during a test payment, the browser success page may appear but `Current Subscription` can still show the old state. Start the listener and repeat the test payment, or resend the event from the Stripe Dashboard/CLI.
 
 ## Run With Docker Compose
 
